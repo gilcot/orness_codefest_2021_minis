@@ -31,30 +31,68 @@ _do_notice() {
 }
 
 ## Pretty print the grid
-# $1: string of internal representation
-# $2: displayed image real width
-# $3: line separator (default pipe, and can't be slash and backslash must be )
-# $4: alive-dead characters pair (default "x" and underscore)
+# $1: string of internal representation ($_l_grid_last)
+# $2: displayed image real width ($_i_size1_w)
+# $3: line separator (default pipe, escape slash with backslash)
+# $4: alive-dead characters pair (default "x"-"_") for standard cells
+# $5: alive-dead characters pair (default "X"-"O") for origin only
 _do_mapout() {
-    #echo "$_l_grid_last" | sed -e "s/.\\{$_i_size1_w\\}/&\\n/g" | tr '10' 'x_'
-    echo "$1" | sed -e "s/.\\{$2\\}/&${3:-|}/g" | tr '10' "${4:-x_}"
+    _i_cell_n=$(( _i_origin_y * ${2} + _i_origin_x ))
+    if test $_i_cell_n -eq 0
+    then
+        echo "$1" | sed -e "s/.\\{$2\\}/&${3:-|}/g" | tr '10' "${4:-x_}"
+    else
+        _i_cell_v=$( echo "$1" | cut -c $_i_cell_n | tr '10' "${5:-XO}" )
+        echo "$1" | sed "s/./$_i_cell_v/$_i_cell_n" |
+            sed -e "s/.\\{$2\\}/&${3:-|}/g" | tr '10' "${4:-x_}"
+    fi
 }
 
-_do_prompt "règle de naissance (3,5,6 = 3, 5 ou 6 voisines)"
-read -r _l_cond_make _void
+if test -n "$1"
+then
+    _do_notice 2 "liste nombre voisins pour nouveau: $1"
+    _l_cond_make="$1"
+    shift
+else
+    _do_prompt "règle de naissance (3,5,6 = 3, 5 ou 6 voisines)"
+    read -r _l_cond_make _void
+fi
 echo "$_l_cond_make" | grep -Eqs '^[0-9]+(,[0-9]+)*$' || exit
 
-_do_prompt "règle de survie (2,3 = 2 ou 3 voisines)"
-read -r _l_cond_keep _void
+if test -n "$1"
+then
+    _do_notice 2 "liste nombre voisins pour survie: $1"
+    _l_cond_keep="$1"
+    shift
+else
+    _do_prompt "règle de survie (2,3 = 2 ou 3 voisines)"
+    read -r _l_cond_keep _void
+fi
 echo "$_l_cond_keep" | grep -Eqs '^[0-9]+(,[0-9]+)*$' || exit
 
-_do_prompt "grille initiale: coin haut-gauche (-10,-5 = rangée,colonne)"
-IFS=',' read -r _i_corner0_x _i_corner0_y _void
+if test -n "$1"
+then
+    _do_notice 2 "coin entrée haut-gauche : ($1)"
+    _i_corner0_x=$( echo "$1" | cut -d ',' -f 1 )
+    _i_corner0_y=$( echo "$1" | cut -d ',' -f 2 )
+    shift
+else
+    _do_prompt "grille initiale: coin haut-gauche (-10,-5 = rangée,colonne)"
+    IFS=',' read -r _i_corner0_x _i_corner0_y _void
+fi
 echo "$_i_corner0_x" | grep -Eqs -e '^-?[0-9]+$' || exit
 echo "$_i_corner0_y" | grep -Eqs -e '^-?[0-9]+$' || exit
 
-_do_prompt "grille initiale: taille totale (13x7 = large × haut)"
-IFS=x read -r _i_size0_w _i_size0_h _void
+if test -n "$1"
+then
+    _do_notice 2 "grille initiale taille : $1"
+    _i_size0_w=$( echo "$1" | cut -d 'x' -f 1 )
+    _i_size0_h=$( echo "$1" | cut -d 'x' -f 2 )
+    shift
+else
+    _do_prompt "grille initiale: taille totale (13x7 = large × haut)"
+    IFS=×xX* read -r _i_size0_w _i_size0_h _void
+fi
 echo "$_i_size0_w" | grep -Eqs '^[0-9]+$' || exit
 echo "$_i_size0_h" | grep -Eqs '^[0-9]+$' || exit
 
@@ -95,34 +133,73 @@ echo "$_i_size0_h" | grep -Eqs '^[0-9]+$' || exit
 # [PBM](https://en.wikipedia.org/wiki/Netpbm#PBM_example)?
 # =doc:md:stop
 
-echo "grille initiale: lignes de cellules (x/_ = vivante/morte)"
 _l_grid_temp=''
-_l_cells=' '
 _l_mask=$( printf '%*s' $_i_size0_w '' | tr ' ' '_' )
 _i_row_num=0
-while test $_i_row_num -lt $_i_size0_h
-do
-    printf ' rangée %i\t' $(( _i_corner0_x + _i_row_num ))
-    IFS= read -r _l_cells
-    _l_grid_temp="$_l_grid_temp$( printf '%s%*.*s' \
-        "$_l_cells" 0 $(( _i_size0_w - ${#_l_cells} )) "$_l_mask" |
-        cut -c 1-$_i_size0_w | tr '[a-zA-Z1-9]' '1' | tr -d '\r\n' | tr -C 1 0 )"
-    _i_row_num=$(( _i_row_num + 1 ))
-done
+if test $# -ge $_i_size0_h
+then
+    _do_notice 2 "grille initiale lignes :"
+    while test $_i_row_num -lt $_i_size0_h
+    do
+        _do_notice 2 " rangée $(( _i_corner0_x + _i_row_num )) = $1"
+        _l_grid_temp="$_l_grid_temp$( printf '%s%*.*s' \
+            "$1" 0 $(( _i_size0_w - ${#1} )) "$_l_mask" |
+            cut -c 1-$_i_size0_w | tr '[a-zA-Z1-9]' '1' |
+            tr -d '\r\n' | tr -C 1 0 )"
+        _i_row_num=$(( _i_row_num + 1 ))
+        shift
+    done
+else
+    _l_cells=' '
+    echo "grille initiale: lignes de cellules (x/_ = vivante/morte)"
+    while test $_i_row_num -lt $_i_size0_h
+    do
+        printf ' rangée %i\t' $(( _i_corner0_x + _i_row_num ))
+        IFS= read -r _l_cells
+        _l_grid_temp="$_l_grid_temp$( printf '%s%*.*s' \
+            "$_l_cells" 0 $(( _i_size0_w - ${#_l_cells} )) "$_l_mask" |
+            cut -c 1-$_i_size0_w | tr '[a-zA-Z1-9]' '1' |
+            tr -d '\r\n' | tr -C 1 0 )"
+        _i_row_num=$(( _i_row_num + 1 ))
+    done
+fi
 unset _i_row_num _l_cells _l_mask
 _do_notice 3 "part grid: $_l_grid_temp" #; exit
 
-_do_prompt "génération attendue en sortie (0 = génération de départ)"
-IFS=' ' read -r _i_gen_end _void
+if test -n "$1"
+then
+    _do_notice 2 "génération finale attendue : $1"
+    _i_gen_end="$1"
+    shift
+else
+    _do_prompt "génération attendue en sortie (0 = génération de départ)"
+    IFS=' ' read -r _i_gen_end _void
+fi
 echo "$_i_gen_end" | grep -Eqs '^[0-9]+$' || exit
 
-_do_prompt "fenêtre d'affichage: coin haut-gauche (3,3 = rangée,colonne)"
-IFS=',' read -r _i_corner1_x _i_corner1_y _void
+if test -n "$1"
+then
+    _do_notice 2 "coin sortie haut-gauche : ($1)"
+    _i_corner1_x=$( echo "$1" | cut -d ',' -f 1 )
+    _i_corner1_y=$( echo "$1" | cut -d ',' -f 2 )
+    shift
+else
+    _do_prompt "fenêtre d'affichage: coin haut-gauche (3,3 = rangée,colonne)"
+    IFS=',' read -r _i_corner1_x _i_corner1_y _void
+fi
 echo "$_i_corner1_x" | grep -Eqs -e '^-?[0-9]+$' -- || exit
 echo "$_i_corner1_y" | grep -Eqs -e '^-?[0-9]+$' -- || exit
 
-_do_prompt "fenêtre d'affichage: coin bas-droite (-4,-1 = rangée,colonne)"
-IFS=',' read -r _i_corner2_x _i_corner2_y _void
+if test -n "$1"
+then
+    _do_notice 2 "coin sortie bas-droite : ($1)"
+    _i_corner2_x=$( echo "$1" | cut -d ',' -f 1 )
+    _i_corner2_y=$( echo "$1" | cut -d ',' -f 2 )
+    shift
+else
+    _do_prompt "fenêtre d'affichage: coin bas-droite (-4,-1 = rangée,colonne)"
+    IFS=',' read -r _i_corner2_x _i_corner2_y _void
+fi
 echo "$_i_corner2_x" | grep -Eqs -e '^-?[0-9]+$' -- || exit
 echo "$_i_corner2_y" | grep -Eqs -e '^-?[0-9]+$' -- || exit
 
@@ -303,10 +380,15 @@ do
         do
             _i_cell_c=$(( _i_cell_n % _i_size1_w ))
             _i_cell_n=$(( _i_cell_n + 1 ))
+            # nota:
+            #   - `r=0 ≑ n≤w`
+            #   - `r⋅w+c ≑ n-w`
+            # beware:
+            #   - `{r,c} ∈ ℕ`
+            #   - `{n,h,w} ∈ ℕ*`
             _do_notice 3 "$_i_cell_n# ($_i_cell_r,$_i_cell_c) = $_i_cell_v"
             _do_notice 6 "gen=$_i_gen_count,pos=$_i_cell_n,val=$_i_cell_v"
             if test $_i_cell_c -eq 0 ||
-                test $_i_cell_r -eq 0 ||
                 test $_i_cell_n -le $_i_size1_w
             then
                 __nw=0
@@ -314,28 +396,23 @@ do
                 _do_notice 5 "$_i_cell_n# North-West"
                 __nw=$( echo "$_l_grid_last" |
                     cut -c $(( _i_cell_n - _i_size1_w - 1 )) )
-                    #cut -c $(( _i_cell_r * _i_size1_w + _i_cell_c - 1 )) )
             fi
-            if test $_i_cell_r -eq 0 ||
-                test $_i_cell_n -le $_i_size1_w
+            if test $_i_cell_n -le $_i_size1_w
             then
                 __nn=0
             else # @(c±0,r-1)
                 _do_notice 5 "$_i_cell_n# due-North"
                 __nn=$( echo "$_l_grid_last" |
                     cut -c $(( _i_cell_n - _i_size1_w )) )
-                    #cut -c $(( _i_cell_r * _i_size1_w + _i_cell_c )) )
             fi
-            if test $_i_cell_c -eq $_i_size1_w ||
-                test $_i_cell_n -lt $_i_size1_w ||
-                test $_i_cell_r -eq 0
+            if test $_i_cell_c -eq $(( _i_size1_w - 1 )) ||
+                test $_i_cell_n -le $_i_size1_w
             then
                 __ne=0
             else # @(c+1,r-1)
                 _do_notice 5 "$_i_cell_n# North-East"
                 __ne=$( echo "$_l_grid_last" |
                     cut -c $(( _i_cell_n - _i_size1_w + 1 )) )
-                    #cut -c $(( _i_cell_r * _i_size1_w + _i_cell_c + 1 )) )
             fi
             if test $_i_cell_c -eq 0 ||
                 test $_i_cell_n -le 1
@@ -346,7 +423,7 @@ do
                 __ww=$( echo "$_l_grid_last" |
                     cut -c $(( _i_cell_n - 1 )) )
             fi
-            if test $_i_cell_c -eq $_i_size1_w
+            if test $_i_cell_c -eq $(( _i_size1_w - 1 ))
             then
                 __ee=0
             else # @(c+1,r±0)
@@ -355,33 +432,30 @@ do
                     cut -c $(( _i_cell_n + 1 )) )
             fi
             if test $_i_cell_c -eq 0 ||
-                test $_i_cell_r -eq $_i_size1_h
+                test $_i_cell_r -eq $(( _i_size1_h - 1 ))
             then
                 __sw=0
             else # @(c-1,r+1)
                 _do_notice 5 "$_i_cell_n# South-West"
                 __sw=$( echo "$_l_grid_last" |
                     cut -c $(( _i_cell_n + _i_size1_w - 1 )) )
-                    #cut -c $(( _i_size1_w * (_i_cell_r + 1) + _i_cell_c - 1 )) )
             fi
-            if test $_i_cell_r -eq $_i_size1_h
+            if test $_i_cell_r -eq $(( _i_size1_h - 1 ))
             then
                 __ss=0
             else # @(c±0,r+1)
                 _do_notice 5 "$_i_cell_n# South-East"
                 __ss=$( echo "$_l_grid_last" |
                     cut -c $(( _i_cell_n + _i_size1_w )) )
-                    #cut -c $(( _i_size1_w * (_i_cell_r +1) + _i_cell_c )) )
             fi
-            if test $_i_cell_c -eq $_i_size1_w ||
-                test $_i_cell_r -eq $_i_size1_h
+            if test $_i_cell_c -eq $(( _i_size1_w - 1 )) ||
+                test $_i_cell_r -eq $(( _i_size1_h - 1 ))
             then
                 __se=0
             else # @(c+1,r+1)
                 _do_notice 5 "$_i_cell_n# due-South"
                 __se=$( echo "$_l_grid_last" |
                     cut -c $(( _i_cell_n + _i_size1_w + 1 )) )
-                    #cut -c $(( _i_size1_w * (_i_cell_r + 1) + _i_cell_c + 1 )) )
             fi
             _i_cell_w=$(( __nw + __nn + __ne + __ww + __ee + __sw + __ss + __se ))
             if echo "$_l_cond_make" | grep -qs "$_i_cell_w"
@@ -394,7 +468,7 @@ do
             then
                 test $_i_cell_v -eq 1 &&
                     #_do_notice 2 "alive ($_i_cell_r,$_i_cell_c): $_i_cell_w near"
-                    _do_notice 2 "✌ ($_i_cell_r,$_i_cell_c)\n$__nw $__nn $__ne\n$__ww $_i_cell_v $__ee\n$__sw $__ss $__se"
+                    _do_notice 2 "✌ ($_i_cell_r,$_i_cell_c)\n$__nw $__nn $__ne\n$__ww $( echo $_i_cell_v | tr '01' 'OI' ) $__ee\n$__sw $__ss $__se"
                 _l_grid_temp="$_l_grid_temp$_i_cell_v"
             else
                 test $_i_cell_v -eq 1 &&

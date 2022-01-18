@@ -384,7 +384,8 @@ avoir à faire des aller-retours entre la page web et le script, ni me perdre
 dans la longue liste. Et puis c'est quand même plus sympa d'avoir une vraie
 interface bien que je devine que l'idée est de faire faire un composant qui
 va probablement s'interfacer avec autre chose. Dans cette optique, je fais
-arrêter le script le script dès qu'une mauvaise ligne est saisie…
+arrêter le script le script dès qu'une mauvaise ligne est saisie…   
+Le dimanche suivant, j'ai enfin ajouté la lecture des argument en argument.
 
 ##### grille initiale
 
@@ -432,28 +433,39 @@ redimensionner la grille de départ (ce qui est un peu plus chronophage…)
 
 #### Sortie
 
-Je vais aussi à contre-indication ici, en ne présentant pas l'_uniline_
+Je suis aussi allé à contre-indication ici, en ne présentant pas l'_uniline_
 demandée mais plutôt en faisant un rendu de la fenêtre de sortie, et ce
 à chaque génération : toujours le côté intéractif… Cependant, on n'utilise
 pas les coordonnées pour de l'affichage en console : on met systématiquement
-le coin haut-gauche de la sortie sur la première colonne de la ligne suivante tout simplement.
+le coin haut-gauche de la sortie sur la première colonne de la ligne suivanter
+tout simplement. Bon, à l'arrivée, je l'ai masqué par une variable de niveau
+de verbosité du débogage : il faut précéder l'appel du script par `DEBUG=1`
+pour réactiver cela.
 
 Au passage, encore merci pour l'exemple détaillé qui montre ce qui est voulu
 car je n'avais pas le même décompte du nombre de colonnes entre `R1` et `R2`.
 Bon, il a fallu recalculer par endroit pour retomber sur nos pattes.
 
-Il reste un bogue à résoudre : mon exécution diffère de l'exemple à partir de
-la sixième génération…
+Il reste un petit souci : mon exécution diffère de l'exemple à partir de la
+huitième génération… On ne doit pas avoir le même algorithme, mais dispo pour
+en discuter.
 ```
 +--------------+--------------+--------------+
 | GENERATION 6 | GENERATION 7 | GENERATION 8 |
 |              |              |              |
 |    ______    |    __x___    |    __x___    |
-|    _xxx__    |    _x_x__    |    xx_xxx    |
-|    _xxx__    |    xx_x_x    |    xx_x__    |
-|    x___xx    |    x___xx    |    x_____    |
-|    _xx_x_    |    xxx_xx    |    x_x_xx    |
-|    _xxx__    |    _xxx__    |    xxxxx_    |
+|    _xxx__    |    _x_x__    |    xx_xx_    |
+|    _xxx__    |    xx_xx_    |    xx_xx_    |
+|    x___x_    |    x___x_    |    x___xx    |
+|    _xx_x_    |    xxx_x_    |    x_x_x_    |
+|    _xxx__    |    _xxx__    |    xxxx__    |
 |              |              |              |
 +--------------+--------------+--------------+
 ```
+
+Petit bonus : pour la sortie j'ai traité l'affichage de l'origine, mais un
+peu différement de juste afficher `O`… C'est perfectible, comme beaucoup
+d'autres choses dans le script, et je suis preneur de toute suggestion. Par
+contre, je n'ai pas traité le cas du premier coin de la fenêtre d'affichage
+(peut-être dans une prochaine monture si je trouve que ça fait quelque sens.)
+À suivre.
