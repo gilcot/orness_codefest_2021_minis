@@ -435,11 +435,15 @@ redimensionner la grille de départ (ce qui est un peu plus chronophage…)
 
 #### Sortie
 
+Ici aussi, il y a quelques remarques à faire.
+
+##### Pas à pas
+
 Je suis aussi allé à contre-indication ici, en ne présentant pas l'_uniline_
 demandée mais plutôt en faisant un rendu de la fenêtre de sortie, et ce
 à chaque génération : toujours le côté intéractif… Cependant, on n'utilise
 pas les coordonnées pour de l'affichage en console : on met systématiquement
-le coin haut-gauche de la sortie sur la première colonne de la ligne suivanter
+le coin haut-gauche de la sortie sur la première colonne de la ligne suivante
 tout simplement. Bon, à l'arrivée, je l'ai masqué par une variable de niveau
 de verbosité du débogage : il faut précéder l'appel du script par `DEBUG=1`
 pour réactiver cela.
@@ -447,6 +451,8 @@ pour réactiver cela.
 Au passage, encore merci pour l'exemple détaillé qui montre ce qui est voulu
 car je n'avais pas le même décompte du nombre de colonnes entre `R1` et `R2`.
 Bon, il a fallu recalculer par endroit pour retomber sur nos pattes.
+
+##### Algo
 
 Il reste un petit souci : mon exécution diffère de l'exemple à partir de la
 huitième génération… On ne doit pas avoir le même algorithme, mais dispo pour
@@ -464,13 +470,19 @@ en discuter.
 |              |              |              |
 +--------------+--------------+--------------+
 ```
+Je suis preneur de toute demande de fusion/tirage apportant la correction.
+
+##### Formatage
 
 Petit bonus : pour la sortie j'ai traité l'affichage de l'origine, mais un
 peu différement de juste afficher `O`… C'est perfectible, comme beaucoup
 d'autres choses dans le script, et je suis preneur de toute suggestion. Par
 contre, je n'ai pas traité le cas du premier coin de la fenêtre d'affichage
 (peut-être dans une prochaine monture si je trouve que ça fait quelque sens.)
-À suivre.
+
+Dans le même esprit, tous les caractères utilisés peuvent être changé en
+utilisant les bascules prévues à cet effet. Attention que les arguments
+passés doivent contenir deux caractères, excepté pour le séparateur.
 
 ### Tests…
 

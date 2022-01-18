@@ -12,6 +12,32 @@ do
     command -v $_cmd >/dev/null || exit 222
 done
 
+while getopts 'D:N:O:R:S:' _c_arg;
+do
+    case "$_c_arg" in
+        D) # Debug
+            _c_opt_d=$( echo "$OPTARG" | cut -c 1-2 )
+            test ${#_c_opt_d} -lt 2 && exit
+            ;;
+        N) # Normal
+            _c_opt_n=$( echo "$OPTARG" | cut -c 1-2 )
+            test ${#_c_opt_n} -lt 2 && exit
+            ;;
+        O) # Origin
+            _c_opt_o=$( echo "$OPTARG" | cut -c 1-2 )
+            test ${#_c_opt_o} -lt 2 && exit
+            ;;
+        R) # Relative start
+            _c_opt_r=$( echo "$OPTARG" | cut -c 1-2 )
+            test ${#_c_opt_r} -lt 2 && exit
+            ;;
+        S) # Separator
+            _c_opt_s="$OPTARG"
+            ;;
+    esac
+done
+shift $(( OPTIND - 1 ))
+
 _i_origin_x=0
 _i_origin_y=0
 OLD_IFS="$IFS"
@@ -31,20 +57,21 @@ _do_notice() {
 }
 
 ## Pretty print the grid
-# $1: string of internal representation ($_l_grid_last)
-# $2: displayed image real width ($_i_size1_w)
-# $3: line separator (default pipe, escape slash with backslash)
-# $4: alive-dead characters pair (default "x"-"_") for standard cells
-# $5: alive-dead characters pair (default "X"-"O") for origin only
+# $_l_grid_last: internal representation of the grid
+# $_i_size1_w: displayed image real width
+# $1: line separator (default pipe, escape slash with backslash)
+# $2: alive-dead characters pair (default "x"-"_") for standard cells
 _do_mapout() {
-    _i_cell_n=$(( _i_origin_y * ${2} + _i_origin_x ))
+    _i_cell_n=$(( _i_origin_y * _i_size1_w + _i_origin_x ))
     if test $_i_cell_n -eq 0
     then
-        echo "$1" | sed -e "s/.\\{$2\\}/&${3:-|}/g" | tr '10' "${4:-x_}"
+        printf '%s' "$_l_grid_last" |
+            sed -e "s/.\\{$_i_size1_w\\}/&${1:-|}/g" | tr '10' "${2:-x_}"
     else
-        _i_cell_v=$( echo "$1" | cut -c $_i_cell_n | tr '10' "${5:-XO}" )
-        echo "$1" | sed "s/./$_i_cell_v/$_i_cell_n" |
-            sed -e "s/.\\{$2\\}/&${3:-|}/g" | tr '10' "${4:-x_}"
+        _i_cell_v=$( echo "$_l_grid_last" |
+            cut -c $_i_cell_n | tr '10' "${_c_opt_o:-XO}" )
+        printf '%s' "$_l_grid_last" | sed "s/./$_i_cell_v/$_i_cell_n" |
+            sed -e "s/.\\{$_i_size1_w\\}/&${1:|}/g" | tr '10' "${2:-x_}"
     fi
 }
 
@@ -369,7 +396,7 @@ do
     _do_notice 1 "turn $_i_gen_count="
     _i_gen_count=$(( _i_gen_count + 1 ))
     test $(( DEBUG )) -ge 1 &&
-        _do_mapout "$_l_grid_last" $_i_size1_w '\n'
+        _do_mapout '\n' "$_c_opt_d"
     _i_cell_n=0
     _i_cell_r=0
     _l_grid_temp=''
@@ -481,4 +508,5 @@ do
     done
     _l_grid_last="$_l_grid_temp"
 done
-_do_mapout "$_l_grid_last" $_i_size1_w
+_do_mapout "$_c_opt_s" "$_c_opt_n"
+echo ''
