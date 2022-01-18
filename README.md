@@ -7,7 +7,7 @@ campagne, du <abbr title="2021-04-09T20:00:00+2">9</abbr> au
 challenges](https://dojo.codes/campaigns/orness_codefest_2021_minis) qui
 finalement n'en comportait qu'une seule. 
 
-  * [d'abord la présentation, tel quel, du défi sur le site](#challenge)
+  * [d'abord la présentation du défi sur le site](#challenge)
   * [ensuite le petit topo sur cette contribution](#debriefing)
 
 C'est parti.
@@ -223,64 +223,94 @@ caractère unicode `█` pour les cellules vivantes pour un meilleur visuel!
 
 ### Test Case
 
+(Un certain nombre de _test cases_ est prévu pour être lancé via un bouton,
+et les tests ont trois paramètres dont deux qui sont vides ici)
+
+|            |               |
+|------------|---------------|
+| Files      | `{}`          |
+| Parameters | `[]`          |
+| StdIn      | voir ci-après |
+
+(le troisième est une chaîne qu'on va indiquer en le précédant du croisillon
+avant de l'indiquer sous forme décomposée pour la lisibilité) 
+
 #### Still block
 
-Files:
 ```
-{}
-```
-Parameters:
-```
-[]
-```
-StdIn:
-```
-"3\n2,3\n1,1\n6x6\n______\n______\n__xx__\n__xx__\n______\n______\n1\n1,1\n6,6\n"
+#"3\n2,3\n1,1\n6x6\n______\n______\n__xx__\n__xx__\n______\n______\n1\n1,1\n6,6\n"
+3
+2,3
+1,1
+6x6
+______
+______
+__xx__
+__xx__
+______
+______
+1
+1,1
+6,6
 ```
 
 #### Blinker
 
-Files:
 ```
-{}
-```
-Parameters:
-```
-[]
-```
-StdIn:
-```
-"3\n2,3\n1,1\n6x6\n______\n__x___\n__x___\n__x___\n______\n______\n5\n1,1\n5,5\n"
+#"3\n2,3\n1,1\n6x6\n______\n__x___\n__x___\n__x___\n______\n______\n5\n1,1\n5,5\n"
+3
+2,3
+1,1
+6x6
+______
+__x___
+__x___
+__x___
+______
+______
+5
+1,1
+5,5
 ```
 
 #### Maze (small)
 
-Files:
 ```
-{}
-```
-Parameters:
-```
-[]
-```
-StdIn:
-```
-"3\n1,2,3,4\n1392,-5\n4x2\nxx_x\n_xxx\n40\n1407,-10\n1382,-20\n"
+#"3\n1,2,3,4\n1392,-5\n4x2\nxx_x\n_xxx\n40\n1407,-10\n1382,-20\n"
+3
+1,2,3,4
+1392,-5
+4x2
+xx_x
+_xxx
+40
+1407,-10
+1382,-20
 ```
 
 #### It's alive! (medium)
 
-Files:
 ```
-{}
-```
-Parameters:
-```
-[]
-```
-StdIn:
-```
-"3,5,7\n1,3,5,8\n1,1\n16x12\n_xx__xx__xx__xx_\n_x_xx__x_x____xx\n________________\n_xx__xx__xx__xx_\n_x_xx__x_x_____x\n_xx_____x___x__x\n_xx___x___x____x\n________________\n_xx_____x___x__x\n_x_xx__x_xx_x_x_\n______xxxxx__xx_\nxxx__xx____x___x\n80\n-2,-5\n18,18\n"
+#"3,5,7\n1,3,5,8\n1,1\n16x12\n_xx__xx__xx__xx_\n_x_xx__x_x____xx\n________________\n_xx__xx__xx__xx_\n_x_xx__x_x_____x\n_xx_____x___x__x\n_xx___x___x____x\n________________\n_xx_____x___x__x\n_x_xx__x_xx_x_x_\n______xxxxx__xx_\nxxx__xx____x___x\n80\n-2,-5\n18,18\n"
+3,5,7
+1,3,5,8
+1,1
+16x12
+_xx__xx__xx__xx_
+_x_xx__x_x____xx
+________________
+_xx__xx__xx__xx_
+_x_xx__x_x_____x
+_xx_____x___x__x
+_xx___x___x____x
+________________
+_xx_____x___x__x
+_x_xx__x_xx_x_x_
+______xxxxx__xx_
+xxx__xx____x___x
+80
+-2,-5
+18,18
 ```
 
 ## debriefing
@@ -303,7 +333,7 @@ inachevée, ce dépôt livre en pâture mes pérégrinations.
 #### La faisabilité
 
 Parmi les langages possibles, il y avait Bash, qui une fois sélectionné
-présentait le modèle suivant&nbsp;:
+présentait le modèle suivant :
 ```sh
 #!/bin/bash
 
@@ -323,7 +353,7 @@ echo "x__x____x|__xx_x_xx|_x_x___xx"
 # If you're really trying in bash... good luck
 
 ```
-Noter la seizième ligne&nbsp;: c'est vraiment un défi dans le défi quand
+Noter la seizième ligne : c'est vraiment un défi dans le défi quand
 on peut utiliser Python 3.8.2 dans la liste de propositions. Mais ayant
 déjà une bonne idée de ce qu'il faut faire dans les autres langages de la
 liste (ayant fait quelques implémentations d'algorithmes de base en C sur
@@ -334,7 +364,7 @@ faisable pour quelqu'un qui passe ses journées en administration système.
 (sorte de <a href="https://fr.wikipedia.org/wiki/Preuve_de_concept"><abbr 
 title="Proof of Concept">PoC</abbr></a> en quelque sorte.)
 
-Mais soyons joueur&nbsp;: je ne vais pas utiliser les avantages de bourne
+Mais soyons joueur : je ne vais pas utiliser les avantages de bourne
 Again ou de Korn, mais rester POSIX… en espérant ne pas le regretter.
 
 ### Comment…
@@ -358,19 +388,19 @@ arrêter le script le script dès qu'une mauvaise ligne est saisie…
 
 ##### grille initiale
 
-Pas évident, mais pour moi, quand on a dit que&nbsp;:
+Pas évident, mais pour moi, quand on a dit que :
 > Cette grille possède un système de coordonnées `(x, y)` qui permet de 
 > cibler n'importe quelle cellule de la grille, relatif au point d'origine 
 > de la grille de coordonnées `(0, 0)`.
 
-…alors je ne vois pas l'intérêt d'indiquer&nbsp;:
+…alors je ne vois pas l'intérêt d'indiquer :
 > 'O' montre le point d'origine (0, 0) de l'univers
 
 …on sait où est l'origine en ayant les deux éléments précédants
-  - coordonnées en haut à gauche de l'univers initial (ici&nbsp;: -10, -5)
-  - taille de l'univers initial LARGEURxHAUTEUR (ici&nbsp;: 13x7)
+  - coordonnées en haut à gauche de l'univers initial (ici : -10, -5)
+  - taille de l'univers initial LARGEURxHAUTEUR (ici : 13x7)
 
-De plus, ça me pose un autre souci&nbsp;: en mettant un caractère, `O`, on
+De plus, ça me pose un autre souci : en mettant un caractère, `O`, on
 ne peut plus indiquer si cet emplacement est occupé ou vide (ce qu'on fait
 normalement avec `x` ou `_` ici.)
 
@@ -383,16 +413,16 @@ hauteur indiquée …et on tronque (ou compléte à blanc) à la largeur indiqu�
 ##### rectangle de sortie
 
 Voici un autre truc pas très clair… Dans la saisie de la grille initiale, on
-a aussi, comme pour l'origine&nbsp;:
+a aussi, comme pour l'origine :
 > 'R' montre le point en haut à gauche de la grille attendue en sortie
 
-Ça me pose le même problème&nbsp;: on ne sait plus si cette case est vivante
+Ça me pose le même problème : on ne sait plus si cette case est vivante
 ou morte. De plus, pareillement, on a comme derniers paramètres, la première
-et la deuxième «&nbsp;coordonnée du rectangle attendu en sortie&nbsp;» Si au début
+et la deuxième « coordonnée du rectangle attendu en sortie » Si au début
 j'ai cru que c'était un point de la grille initiale, l'exemple donné ensuite
 montre que c'est un cadre englobant, ce qui n'est pas déconnant.
 
-Petit bémole… Comme je traite les entrées au fur et à mesure (i.e. on ne
+Petit bémol… Comme je traite les entrées au fur et à mesure (i.e. on ne
 collecte pas d'abord pour les traitement tranquillement ensuite, mais au
 contraire on fait au moins la validation au plus tôt pour arrêter au plus
 vite en cas d'erreur), j'aurais préféré que ces deux coordonnées soient
@@ -404,5 +434,26 @@ redimensionner la grille de départ (ce qui est un peu plus chronophage…)
 
 Je vais aussi à contre-indication ici, en ne présentant pas l'_uniline_
 demandée mais plutôt en faisant un rendu de la fenêtre de sortie, et ce
-à chaque génération&nbsp;: toujours le côté intéractif…
+à chaque génération : toujours le côté intéractif… Cependant, on n'utilise
+pas les coordonnées pour de l'affichage en console : on met systématiquement
+le coin haut-gauche de la sortie sur la première colonne de la ligne suivante tout simplement.
 
+Au passage, encore merci pour l'exemple détaillé qui montre ce qui est voulu
+car je n'avais pas le même décompte du nombre de colonnes entre `R1` et `R2`.
+Bon, il a fallu recalculer par endroit pour retomber sur nos pattes.
+
+Il reste un bogue à résoudre : mon exécution diffère de l'exemple à partir de
+la sixième génération…
+```
++--------------+--------------+--------------+
+| GENERATION 6 | GENERATION 7 | GENERATION 8 |
+|              |              |              |
+|    ______    |    __x___    |    __x___    |
+|    _xxx__    |    _x_x__    |    xx_xxx    |
+|    _xxx__    |    xx_x_x    |    xx_x__    |
+|    x___xx    |    x___xx    |    x_____    |
+|    _xx_x_    |    xxx_xx    |    x_x_xx    |
+|    _xxx__    |    _xxx__    |    xxxxx_    |
+|              |              |              |
++--------------+--------------+--------------+
+```

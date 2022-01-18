@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh +e
 # ex: ai:sw=4:ts=4
 # vim: ai:ft=sh:sw=4:ts=4:ff=unix:sts=4:et:fenc=utf8
 # -*- sh; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4;
@@ -17,15 +17,27 @@ _i_origin_y=0
 OLD_IFS="$IFS"
 
 ## Nice display of prompt message to have inputs aligned
-# $1: text to format
+# $1: text to format on stdin
 _do_prompt() {
     printf '%-60s\t' "$1"
 }
 
-## Output trace message
-# $1: text to format on stderr
+## Output trace message on verbose mode
+# $1: debug/warning/notice level
+# $2: text to format on stderr
 _do_notice() {
-    echo "DeBuG: $1" >&2
+    test $(( DEBUG )) -ge $1 &&
+        echo "DeBuG$1: $2" >&2
+}
+
+## Pretty print the grid
+# $1: string of internal representation
+# $2: displayed image real width
+# $3: line separator (default pipe, and can't be slash and backslash must be )
+# $4: alive-dead characters pair (default "x" and underscore)
+_do_mapout() {
+    #echo "$_l_grid_last" | sed -e "s/.\\{$_i_size1_w\\}/&\\n/g" | tr '10' 'x_'
+    echo "$1" | sed -e "s/.\\{$2\\}/&${3:-|}/g" | tr '10' "${4:-x_}"
 }
 
 _do_prompt "règle de naissance (3,5,6 = 3, 5 ou 6 voisines)"
@@ -84,26 +96,25 @@ echo "$_i_size0_h" | grep -Eqs '^[0-9]+$' || exit
 # =doc:md:stop
 
 echo "grille initiale: lignes de cellules (x/_ = vivante/morte)"
-#printf "\tO = point d'origine 0,0\n\tR = point haut-gauche grill-sortie\n"
-_temp_grid=''
+_l_grid_temp=''
 _l_cells=' '
 _l_mask=$( printf '%*s' $_i_size0_w '' | tr ' ' '_' )
-_i_row_count=0
-while test $_i_row_count -lt $_i_size0_h
+_i_row_num=0
+while test $_i_row_num -lt $_i_size0_h
 do
-    printf ' rangée %i\t' $(( _i_corner0_x + _i_row_count ))
+    printf ' rangée %i\t' $(( _i_corner0_x + _i_row_num ))
     IFS= read -r _l_cells
-    _temp_grid="$_temp_grid$( printf '%s%*.*s' \
+    _l_grid_temp="$_l_grid_temp$( printf '%s%*.*s' \
         "$_l_cells" 0 $(( _i_size0_w - ${#_l_cells} )) "$_l_mask" |
         cut -c 1-$_i_size0_w | tr '[a-zA-Z1-9]' '1' | tr -d '\r\n' | tr -C 1 0 )"
-    _i_row_count=$(( _i_row_count + 1 ))
+    _i_row_num=$(( _i_row_num + 1 ))
 done
-unset _i_row_count _l_cells _l_mask
-#_do_notice "part grid: $_temp_grid" #; exit
+unset _i_row_num _l_cells _l_mask
+_do_notice 3 "part grid: $_l_grid_temp" #; exit
 
 _do_prompt "génération attendue en sortie (0 = génération de départ)"
 IFS=' ' read -r _i_gen_end _void
-echo "$_i_gen_end" | grep -Eqs '[0-9]+' || exit
+echo "$_i_gen_end" | grep -Eqs '^[0-9]+$' || exit
 
 _do_prompt "fenêtre d'affichage: coin haut-gauche (3,3 = rangée,colonne)"
 IFS=',' read -r _i_corner1_x _i_corner1_y _void
@@ -164,26 +175,26 @@ echo "$_i_corner2_y" | grep -Eqs -e '^-?[0-9]+$' -- || exit
 if test $_i_corner1_x -lt $_i_corner2_x &&
     test $_i_corner1_y -lt $_i_corner2_y
 then
-    #_do_notice "swap ($_i_corner1_x,$_i_corner1_y) & ($_i_corner2_x,$_i_corner2_y)"
-    _i_row_count=$_i_corner2_y
+    _do_notice 3 "swap ($_i_corner1_x,$_i_corner1_y) & ($_i_corner2_x,$_i_corner2_y)"
+    _i_row_num=$_i_corner2_y
     _i_corner2_y=$_i_corner1_y
-    _i_corner1_y=$_i_row_count
+    _i_corner1_y=$_i_row_num
     # should read as _i_col_count
-    _i_row_count=$_i_corner2_x
+    _i_row_num=$_i_corner2_x
     _i_corner2_x=$_i_corner1_x
-    _i_corner1_x=$_i_row_count
-    #_do_notice "done ($_i_corner1_x,$_i_corner1_y) & ($_i_corner2_x,$_i_corner2_y)"
+    _i_corner1_x=$_i_row_num
+    _do_notice 4 "done ($_i_corner1_x,$_i_corner1_y) & ($_i_corner2_x,$_i_corner2_y)"
 fi
 
-_i_row_count=$(( _i_corner2_y - _i_corner1_y ))
-_i_row_count=${_i_row_count#-}
+_i_row_num=$(( _i_corner2_y - _i_corner1_y ))
+_i_row_num=${_i_row_num#-}
 # bash/ksh93/etc. have abs function but that's not POSIX
-_i_size1_h=$(( _i_row_count > _i_size0_h ? _i_row_count : _i_size0_h ))
+_i_size1_h=$(( _i_row_num > _i_size0_h ? _i_row_num + 1 : _i_size0_h ))
 
-_i_row_count=$(( _i_corner2_x - _i_corner1_x ))
+_i_row_num=$(( _i_corner2_x - _i_corner1_x ))
 # it's column but recycling variable
-_i_row_count=${_i_row_count#-}
-_i_size1_w=$(( _i_row_count > _i_size0_w ? _i_row_count : _i_size0_w ))
+_i_row_num=${_i_row_num#-}
+_i_size1_w=$(( _i_row_num > _i_size0_w ? _i_row_num + 1 : _i_size0_w ))
 
 if test $_i_corner1_y -lt $_i_corner2_y
 then
@@ -196,38 +207,38 @@ fi
 
 _i_col_padL=$(( _i_corner1_x > _i_corner0_x ? _i_corner1_x - _i_corner0_x : _i_corner0_x - _i_corner1_x ))
 _i_col_padR=$(( _i_size1_w - _i_size0_w - _i_col_padL ))
-#_do_notice "padding L-R=$_i_col_padL-$_i_col_padR"
+_do_notice 3 "padding L-R=$_i_col_padL-$_i_col_padR"
 
-_last_grid=''
-_i_row_count=0
-#_do_notice "lines from $_i_row_pos to $_i_row_end"
+_l_grid_last=''
+_i_row_num=0
+_do_notice 2 "lines from $_i_row_pos to $_i_row_end"
 while test $_i_row_pos -le $_i_row_end
 do
     test $_i_row_pos -eq 0 &&
-        _i_origin_y=$_i_row_count
+        _i_origin_y=$_i_row_num
     if test $_i_row_pos -lt $_i_corner0_y ||
         test $_i_row_pos -ge $(( _i_corner0_y + _i_size0_h ))
     then
-        #_do_notice "at row $_i_row_count for $_i_row_pos with nothing"
-        _last_grid="$_last_grid$( printf '%0*d' $_i_size1_w 0 )"
+        _do_notice 3 "at row $_i_row_num for $_i_row_pos with nothing"
+        _l_grid_last="$_l_grid_last$( printf '%0*d' $_i_size1_w 0 )"
     else
-        _i_sub_index=$(( _i_size0_w * (_i_row_count - _i_size0_h) + 1 ))
-        #_do_notice "at row $_i_row_count for $_i_row_pos with $_i_sub_index"
+        _i_sub_index=$(( _i_size0_w * (_i_row_num - _i_size0_h) + 1 ))
+        _do_notice 3 "at row $_i_row_num for $_i_row_pos with $_i_sub_index"
         test $_i_col_padL -gt 0 &&
-            _last_grid="$_last_grid$( printf '%0*d' $_i_col_padL 0 )"
-        _last_grid="$_last_grid$( echo "$_temp_grid" |
+            _l_grid_last="$_l_grid_last$( printf '%0*d' $_i_col_padL 0 )"
+        _l_grid_last="$_l_grid_last$( echo "$_l_grid_temp" |
             cut -c $_i_sub_index-$(( _i_sub_index + _i_size0_w - 1 )) )"
         test $_i_col_padR -gt 0 &&
-            _last_grid="$_last_grid$( printf '%0*d' $_i_col_padR 0 )"
+            _l_grid_last="$_l_grid_last$( printf '%0*d' $_i_col_padR 0 )"
     fi
-    #_do_notice "currently: $_last_grid"
-    _i_row_count=$(( _i_row_count + 1 ))
+    _do_notice 4 "currently: $_l_grid_last"
+    _i_row_num=$(( _i_row_num + 1 ))
     _i_row_pos=$(( _i_row_pos + 1 ))
 done
 unset _i_col_padL _i_col_padR
-unset _i_corner0_x _i_corner0_y _i_size0_h _i_size0_w _temp_grid
+unset _i_corner0_x _i_corner0_y _i_size0_h _i_size0_w _l_grid_temp
 #unset _i_corner1_y _i_corner2_y
-#_do_notice "last grid: $_last_grid" ; exit
+_do_notice 2 "last grid: $_l_grid_last"
 
 if test $_i_corner1_x -lt $_i_corner2_x
 then
@@ -237,16 +248,16 @@ else
     _i_row_pos=$_i_corner2_x
     _i_row_end=$_i_corner1_x
 fi
-#_do_notice "columns from $_i_row_pos to $_i_row_end"
-_i_row_count=0
+_do_notice 2 "columns from $_i_row_pos to $_i_row_end"
+_i_row_num=0
 while test $_i_row_pos -le $_i_row_end
 do
     test $_i_row_pos -eq 0 &&
-        _i_origin_x=$_i_row_count
+        _i_origin_x=$_i_row_num
     _i_row_pos=$(( _i_row_pos + 1 ))
-    _i_row_count=$(( _i_row_count + 1 ))
+    _i_row_num=$(( _i_row_num + 1 ))
 done
-unset _i_row_count _i_row_end _i_row_pos
+unset _i_row_num _i_row_end _i_row_pos
 #unset _i_corner1_x _i_corner2_x
 
 # =doc:md:start
@@ -278,96 +289,122 @@ unset _i_row_count _i_row_end _i_row_pos
 _i_gen_count=0
 while test $_i_gen_count -le $_i_gen_end
 do
-    _do_notice "turn $_i_gen_count:"
+    _do_notice 1 "turn $_i_gen_count="
     _i_gen_count=$(( _i_gen_count + 1 ))
-    echo "$_last_grid" | sed -e "s/.\\{$_i_size1_w\\}/&\\n/g" | tr '10' 'x_'
-    _i_cell_count=0
-    _temp_grid=''
-    for _i_cell_value in $( echo "$_last_grid" | fold -w 1 )
+    test $(( DEBUG )) -ge 1 &&
+        _do_mapout "$_l_grid_last" $_i_size1_w '\n'
+    _i_cell_n=0
+    _i_cell_r=0
+    _l_grid_temp=''
+    for _l_grid_line in $( printf '%s' "$_l_grid_last" | fold -w $_i_size1_w )
     do
-        _i_cell_c=$(( _i_cell_count % (_i_size1_w + 1) + 1 ))
-        _i_cell_r=$(( (_i_cell_count - _i_cell_c + 1) / _i_size1_w ))
-        #_do_notice "$_i_cell_count# ($_i_cell_r,$_i_cell_c) = $_i_cell_value"
-        # internal ksh/bash: echo ${var:start_index:length}
-        # external posix undef...: expr $var star_index length
-        # externals posix ok...: echo $var | head -c start_index | tail -c length+1
-        # external posix fine...: echo $var | cut -c start_index
-        #_do_notice "gen=$_i_gen_count,pos=$_i_cell_count,val=$_i_cell_value"
-        if test $_i_cell_c -eq 0 || test $_i_cell_r -eq 0
-        then
-            __nw=0
-        else # @(c-1,r-1)
-            #_do_notice "at NW"
-            __nw=$( echo "$_last_grid" |
-                cut -c $(( _i_cell_r * _i_size1_w + _i_cell_c - 1 )) )
-        fi
-        if test $_i_cell_r -eq 0
-        then
-            __nn=0
-        else # @(c±0,r-1)
-            #_do_notice "at NN"
-            __nn=$( echo "$_last_grid" |
-                cut -c $(( _i_cell_r * _i_size1_w + _i_cell_c )) )
-        fi
-        if test $_i_cell_c -eq $_i_size1_w || test $_i_cell_r -eq 0
-        then
-            __ne=0
-        else # @(c+1,r-1)
-            #_do_notice "at NE"
-            __ne=$( echo "$_last_grid" |
-                cut -c $(( _i_cell_r * _i_size1_w + _i_cell_c + 1 )) )
-        fi
-        if test $_i_cell_c -eq 0 || test $_i_cell_count -le 1
-        then
-            __ww=0
-        else # @(c-1,r±0)
-            #_do_notice "at WW"
-            __ww=$( echo "$_last_grid" |
-                cut -c $(( _i_cell_count - 1 )) )
-        fi
-        if test $_i_cell_c -eq $_i_size1_w
-        then
-            __ee=0
-        else # @(c+1,r±0)
-            #_do_notice "at EE"
-            __ee=$( echo "$_last_grid" |
-                cut -c $(( _i_cell_count + 1 )) )
-        fi
-        if test $_i_cell_c -eq 0 || test $_i_cell_r -eq $_i_size1_h
-        then
-            __sw=0
-        else # @(c-1,r+1)
-            #_do_notice "at SW"
-            __sw=$( echo "$_last_grid" |
-                cut -c $(( _i_size1_w * (_i_cell_r + 1) + _i_cell_c - 1 )) )
-        fi
-        if test $_i_cell_r -eq $_i_size1_h
-        then
-            __ss=0
-        else # @(c±0,r+1)
-            #_do_notice "at SS"
-            __ss=$( echo "$_last_grid" |
-                cut -c $(( _i_size1_w * (_i_cell_r + 1) + _i_cell_c )) )
-        fi
-        if test $_i_cell_c -eq $_i_size1_w || test $_i_cell_r -eq $_i_size1_h
-        then
-            __se=0
-        else # @(c+1,r+1)
-            #_do_notice "at SE"
-            __se=$( echo "$_last_grid" |
-                cut -c $(( _i_size1_w * (_i_cell_r + 1) + _i_cell_c + 1 )) )
-        fi
-        _i_cell_weight=$(( __nw + __nn + __ne + __ww + __ee + __sw + __ss + __se ))
-        if echo "$_l_cond_keep" | grep -qs "$_i_cell_weight"
-        then
-            _temp_grid="$_temp_grid$_i_cell_value"
-        elif echo "$_l_cond_make" | grep -qs "$_i_cell_weight"
-        then
-            _temp_grid="${_temp_grid}1"
-        else
-            _temp_grid="${_temp_grid}0"
-        fi
-        _i_cell_count=$(( _i_cell_count + 1 ))
+        _do_notice 2 "r$_i_cell_r= $_l_grid_line"
+        for _i_cell_v in $( printf '%s' "$_l_grid_line" | fold -w 1 )
+        do
+            _i_cell_c=$(( _i_cell_n % _i_size1_w ))
+            _i_cell_n=$(( _i_cell_n + 1 ))
+            _do_notice 3 "$_i_cell_n# ($_i_cell_r,$_i_cell_c) = $_i_cell_v"
+            _do_notice 6 "gen=$_i_gen_count,pos=$_i_cell_n,val=$_i_cell_v"
+            if test $_i_cell_c -eq 0 ||
+                test $_i_cell_r -eq 0 ||
+                test $_i_cell_n -le $_i_size1_w
+            then
+                __nw=0
+            else # @(c-1,r-1)
+                _do_notice 5 "$_i_cell_n# North-West"
+                __nw=$( echo "$_l_grid_last" |
+                    cut -c $(( _i_cell_n - _i_size1_w - 1 )) )
+                    #cut -c $(( _i_cell_r * _i_size1_w + _i_cell_c - 1 )) )
+            fi
+            if test $_i_cell_r -eq 0 ||
+                test $_i_cell_n -le $_i_size1_w
+            then
+                __nn=0
+            else # @(c±0,r-1)
+                _do_notice 5 "$_i_cell_n# due-North"
+                __nn=$( echo "$_l_grid_last" |
+                    cut -c $(( _i_cell_n - _i_size1_w )) )
+                    #cut -c $(( _i_cell_r * _i_size1_w + _i_cell_c )) )
+            fi
+            if test $_i_cell_c -eq $_i_size1_w ||
+                test $_i_cell_n -lt $_i_size1_w ||
+                test $_i_cell_r -eq 0
+            then
+                __ne=0
+            else # @(c+1,r-1)
+                _do_notice 5 "$_i_cell_n# North-East"
+                __ne=$( echo "$_l_grid_last" |
+                    cut -c $(( _i_cell_n - _i_size1_w + 1 )) )
+                    #cut -c $(( _i_cell_r * _i_size1_w + _i_cell_c + 1 )) )
+            fi
+            if test $_i_cell_c -eq 0 ||
+                test $_i_cell_n -le 1
+            then
+                __ww=0
+            else # @(c-1,r±0)
+                _do_notice 5 "$_i_cell_n# due-West"
+                __ww=$( echo "$_l_grid_last" |
+                    cut -c $(( _i_cell_n - 1 )) )
+            fi
+            if test $_i_cell_c -eq $_i_size1_w
+            then
+                __ee=0
+            else # @(c+1,r±0)
+                _do_notice 5 "$_i_cell_n# due-East"
+                __ee=$( echo "$_l_grid_last" |
+                    cut -c $(( _i_cell_n + 1 )) )
+            fi
+            if test $_i_cell_c -eq 0 ||
+                test $_i_cell_r -eq $_i_size1_h
+            then
+                __sw=0
+            else # @(c-1,r+1)
+                _do_notice 5 "$_i_cell_n# South-West"
+                __sw=$( echo "$_l_grid_last" |
+                    cut -c $(( _i_cell_n + _i_size1_w - 1 )) )
+                    #cut -c $(( _i_size1_w * (_i_cell_r + 1) + _i_cell_c - 1 )) )
+            fi
+            if test $_i_cell_r -eq $_i_size1_h
+            then
+                __ss=0
+            else # @(c±0,r+1)
+                _do_notice 5 "$_i_cell_n# South-East"
+                __ss=$( echo "$_l_grid_last" |
+                    cut -c $(( _i_cell_n + _i_size1_w )) )
+                    #cut -c $(( _i_size1_w * (_i_cell_r +1) + _i_cell_c )) )
+            fi
+            if test $_i_cell_c -eq $_i_size1_w ||
+                test $_i_cell_r -eq $_i_size1_h
+            then
+                __se=0
+            else # @(c+1,r+1)
+                _do_notice 5 "$_i_cell_n# due-South"
+                __se=$( echo "$_l_grid_last" |
+                    cut -c $(( _i_cell_n + _i_size1_w + 1 )) )
+                    #cut -c $(( _i_size1_w * (_i_cell_r + 1) + _i_cell_c + 1 )) )
+            fi
+            _i_cell_w=$(( __nw + __nn + __ne + __ww + __ee + __sw + __ss + __se ))
+            if echo "$_l_cond_make" | grep -qs "$_i_cell_w"
+            then
+                test $_i_cell_v -eq 0 &&
+                    #_do_notice 2 "birth ($_i_cell_r,$_i_cell_c): $_i_cell_w near"
+                    _do_notice 2 "👶 ($_i_cell_r,$_i_cell_c)\n$__nw $__nn $__ne\n$__ww x $__ee\n$__sw $__ss $__se"
+                _l_grid_temp="${_l_grid_temp}1"
+            elif echo "$_l_cond_keep" | grep -qs "$_i_cell_w"
+            then
+                test $_i_cell_v -eq 1 &&
+                    #_do_notice 2 "alive ($_i_cell_r,$_i_cell_c): $_i_cell_w near"
+                    _do_notice 2 "✌ ($_i_cell_r,$_i_cell_c)\n$__nw $__nn $__ne\n$__ww $_i_cell_v $__ee\n$__sw $__ss $__se"
+                _l_grid_temp="$_l_grid_temp$_i_cell_v"
+            else
+                test $_i_cell_v -eq 1 &&
+                    #_do_notice 2 "death ($_i_cell_r,$_i_cell_c): $_i_cell_w near"
+                    _do_notice 2 "☠ ($_i_cell_r,$_i_cell_c)\n$__nw $__nn $__ne\n$__ww _ $__ee\n$__sw $__ss $__se"
+                _l_grid_temp="${_l_grid_temp}0"
+            fi
+        done
+        _i_cell_r=$(( _i_cell_r + 1 ))
     done
-    _last_grid="$_temp_grid"
+    _l_grid_last="$_l_grid_temp"
 done
+_do_mapout "$_l_grid_last" $_i_size1_w
