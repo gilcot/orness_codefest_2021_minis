@@ -1,4 +1,4 @@
-#!/bin/sh +e
+#!/bin/sh
 # ex: ai:sw=4:ts=4
 # vim: ai:ft=sh:sw=4:ts=4:ff=unix:sts=4:et:fenc=utf8
 # -*- sh; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4;
@@ -249,8 +249,8 @@ echo "$_i_corner2_y" | grep -Eqs -e '^-?[0-9]+$' -- || exit
 # ```
 # =doc:md:stop
 
-if test $_i_corner1_x -lt $_i_corner2_x &&
-    test $_i_corner1_y -lt $_i_corner2_y
+if test $_i_corner1_x -gt $_i_corner2_x &&
+    test $_i_corner1_y -gt $_i_corner2_y
 then
     _do_notice 3 "swap ($_i_corner1_x,$_i_corner1_y) & ($_i_corner2_x,$_i_corner2_y)"
     _i_row_num=$_i_corner2_y
@@ -299,7 +299,7 @@ do
         _do_notice 3 "at row $_i_row_num for $_i_row_pos with nothing"
         _l_grid_last="$_l_grid_last$( printf '%0*d' $_i_size1_w 0 )"
     else
-        _i_sub_index=$(( _i_size0_w * (_i_row_num - _i_size0_h) + 1 ))
+        _i_sub_index=$(( _i_size0_w * (_i_row_pos - _i_corner0_y) + 1 ))
         _do_notice 3 "at row $_i_row_num for $_i_row_pos with $_i_sub_index"
         test $_i_col_padL -gt 0 &&
             _l_grid_last="$_l_grid_last$( printf '%0*d' $_i_col_padL 0 )"
@@ -364,7 +364,7 @@ unset _i_row_num _i_row_end _i_row_pos
 # =doc:md:stop
 
 _i_gen_count=0
-while test $_i_gen_count -le $_i_gen_end
+while test $_i_gen_count -lt $_i_gen_end
 do
     _do_notice 1 "turn $_i_gen_count="
     _i_gen_count=$(( _i_gen_count + 1 ))

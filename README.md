@@ -315,6 +315,8 @@ xxx__xx____x___x
 
 ## debriefing
 
+Author: gilcot
+
 ### Pourquoi…
 
 Introduisons le sujet en répondant à aux questions qui posent le contexte.
@@ -469,3 +471,116 @@ d'autres choses dans le script, et je suis preneur de toute suggestion. Par
 contre, je n'ai pas traité le cas du premier coin de la fenêtre d'affichage
 (peut-être dans une prochaine monture si je trouve que ça fait quelque sens.)
 À suivre.
+
+### Tests…
+
+Résultats avec la différence d'algorithme
+
+#### my Still block
+
+```
+______
+______
+__xx__
+__xx__
+______
+______
+```
+Ici, le même bloc se répète indéfiniement.
+
+#### my Blinker
+
+```
+______
+______
+_xxx__
+______
+______
+```
+…aux tours pairs, et
+```
+______
+__x___
+__x___
+__x___
+______
+
+```
+…aux tours impaires.
+
+#### my Maze
+
+```
+__________________________
+__________________________
+__________________________
+__________________________
+__________________________
+__________________________
+__________________________
+__________________________
+__________________________
+__________________________
+__________________________
+```
+?
+#### my Alive
+
+```
+_____________________
+_____________________
+_____________________
+___________x_xx______
+_________x_x__x______
+_O_x_________xx______
+_______xx____xx______
+___xx__x_x_xxx_______
+_______x_x_xx________
+__x____x____x________
+_xx_x_x___x_x________
+_xxx_x_x____x________
+___xx_____x__________
+_xxx_xx_xx__xx_______
+_xx_x_xxxxx__________
+_x_______xxxxx_______
+__x__x___x_xx_x______
+____x________x_x_____
+______x____xx__xx____
+____________x_xxx____
+_____________xxx_____
+____________xxxx_____
+____________x________
+_____________________
+```
+Ça varie à chaque tour, faisant penser à une quelque [culture bactérienne
+en milieu agar-agar](https://fr.wikipedia.org/wiki/Bo%C3%AEte_de_Petri).
+Voici l'état dix générations plus tôt :
+```
+_____________________
+_____________________
+_____________________
+__x________x_________
+_________xx__________
+_X_____x_xxx_x_______
+_______x__xx_x_______
+__x____xxxx_xx_______
+_xxxxxx_x__x_________
+_____xx_xx_____x_____
+______xxx_xx_xx_x____
+___xx_x_x___xxxxx____
+___xxx_xx___x___x____
+___x__x_xxx_x________
+___xx_xxx_xx__xx_____
+__x____xx____x_x_____
+______xxx__x____x____
+_____xx_xx_xx________
+__________x__x_______
+____________x________
+__________x_x________
+__________xxx________
+___________x_________
+____________x________
+```
+Au passage, on voit que plus la fenêtre est grosse plus le script met du
+temps à se dérouler, mais ça semble proportionnel (`O(n)` à vu de nez…)
+
